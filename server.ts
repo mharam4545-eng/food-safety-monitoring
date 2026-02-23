@@ -78,9 +78,18 @@ async function startServer() {
       );
       res.json(sorted);
     } catch (error) {
-      console.error("Error fetching MFDS updates:", error);
-      res.status(500).json({ error: "데이터를 불러오는 중 오류가 발생했습니다." });
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching MFDS updates:", message);
+      res.status(500).json({ error: message });
     }
+  });
+
+  app.get("/api/debug", (req, res) => {
+    res.json({
+      hasApiKey: !!process.env.GEMINI_API_KEY,
+      nodeEnv: process.env.NODE_ENV,
+      nodeVersion: process.version,
+    });
   });
 
   if (process.env.NODE_ENV !== "production") {
