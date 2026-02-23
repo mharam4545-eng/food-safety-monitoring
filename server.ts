@@ -19,7 +19,7 @@ interface MfdsItem {
 
 async function fetchMfdsUpdates(): Promise<MfdsItem[]> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const model = "gemini-1.5-flash";
+  const model = "gemini-2.0-flash-exp";
 
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
@@ -84,12 +84,27 @@ async function startServer() {
     }
   });
 
-  app.get("/api/debug", (req, res) => {
-    res.json({
-      hasApiKey: !!process.env.GEMINI_API_KEY,
-      nodeEnv: process.env.NODE_ENV,
-      nodeVersion: process.version,
-    });
+  app.get("/api/debug", async (req, res) => {
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const models: string[] = [];
+      for await (const m of ai.models.list()) {
+        models.push(m.name ?? "");
+      }
+      res.json({
+        hasApiKey: !!process.env.GEMINI_API_KEY,
+        nodeEnv: process.env.NODE_ENV,
+        nodeVersion: process.version,
+        availableModels: models.filter(m => m.includes("gemini")),
+      });
+    } catch (e) {
+      res.json({
+        hasApiKey: !!process.env.GEMINI_API_KEY,
+        nodeEnv: process.env.NODE_ENV,
+        nodeVersion: process.version,
+        modelsError: e instanceof Error ? e.message : String(e),
+      });
+    }
   });
 
   if (process.env.NODE_ENV !== "production") {
