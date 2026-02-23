@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -19,7 +19,7 @@ interface MfdsItem {
 
 async function fetchMfdsUpdates(): Promise<MfdsItem[]> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const model = "gemini-2.5-flash-preview-05-20";
+  const model = "gemini-2.0-flash";
 
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
@@ -38,7 +38,9 @@ async function fetchMfdsUpdates(): Promise<MfdsItem[]> {
     반드시 공식적인 정보여야 하며, 블로그나 개인 의견은 제외하세요.
     각 항목에 대해 제목, 날짜, 카테고리, 해당 페이지 URL, 그리고 핵심 내용을 1-2문장으로 요약한 내용을 포함해야 합니다.
 
-    결과는 반드시 날짜 최신순(내림차순)으로 정렬하여 JSON 형식의 배열로 반환해주세요.
+    결과는 아래 형식의 순수 JSON 배열로만 반환해주세요. 날짜 최신순(내림차순) 정렬.
+    다른 텍스트나 마크다운 없이 JSON 배열만 출력하세요:
+    [{"title":"...","date":"YYYY-MM-DD","category":"법령/고시","url":"https://...","summary":"..."}]
   `;
 
   const response = await ai.models.generateContent({
@@ -46,27 +48,16 @@ async function fetchMfdsUpdates(): Promise<MfdsItem[]> {
     contents: prompt,
     config: {
       tools: [{ googleSearch: {} }],
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            date: { type: Type.STRING },
-            category: { type: Type.STRING },
-            url: { type: Type.STRING },
-            summary: { type: Type.STRING },
-          },
-          required: ["title", "date", "category", "url", "summary"],
-        },
-      },
     },
   });
 
   const text = response.text;
   if (!text) return [];
-  return JSON.parse(text) as MfdsItem[];
+
+  // JSON 배열 추출 (마크다운 코드블록 처리)
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) return [];
+  return JSON.parse(jsonMatch[0]) as MfdsItem[];
 }
 
 async function startServer() {
