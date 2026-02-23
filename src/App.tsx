@@ -4,12 +4,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  RefreshCw, 
-  ExternalLink, 
-  FileText, 
-  AlertCircle, 
+import {
+  Search,
+  RefreshCw,
+  ExternalLink,
+  FileText,
+  AlertCircle,
   ChevronRight,
   Clock,
   ShieldCheck,
@@ -20,15 +20,6 @@ import { MfdsItem } from './services/geminiService';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    };
-  }
-}
-
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -38,26 +29,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hasApiKey, setHasApiKey] = useState<boolean>(true);
-
-  useEffect(() => {
-    const checkApiKey = async () => {
-      if (window.aistudio?.hasSelectedApiKey) {
-        const selected = await window.aistudio.hasSelectedApiKey();
-        setHasApiKey(selected);
-      }
-    };
-    checkApiKey();
-  }, []);
-
-  const handleOpenKeyDialog = async () => {
-    if (window.aistudio?.openSelectKey) {
-      await window.aistudio.openSelectKey();
-      setHasApiKey(true);
-      // Re-load data after key selection
-      loadData();
-    }
-  };
 
   const loadData = async () => {
     setLoading(true);
@@ -69,7 +40,7 @@ export default function App() {
       setItems(data);
       setLastUpdated(new Date().toLocaleTimeString('ko-KR'));
     } catch (err) {
-      setError('데이터를 불러오는 중 오류가 발생했습니다. API 키 설정을 확인하거나 잠시 후 다시 시도해주세요.');
+      setError('데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -96,26 +67,8 @@ export default function App() {
               <p className="text-xs text-slate-500 font-medium">품질 연구원 전용 전문 정보 시스템</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            {!hasApiKey && (
-              <button
-                onClick={handleOpenKeyDialog}
-                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 transition-all shadow-sm"
-              >
-                <AlertCircle className="w-4 h-4" />
-                API 키 설정 필요
-              </button>
-            )}
-            {hasApiKey && (
-              <button
-                onClick={handleOpenKeyDialog}
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all"
-              >
-                <Database className="w-4 h-4" />
-                API 키 변경
-              </button>
-            )}
             {lastUpdated && (
               <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
                 <Clock className="w-3.5 h-3.5" />
@@ -217,9 +170,9 @@ export default function App() {
                             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">
                               {item.date}
                             </span>
-                            <a 
-                              href={item.url} 
-                              target="_blank" 
+                            <a
+                              href={item.url}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-slate-400 hover:text-emerald-600 transition-colors"
                             >
@@ -233,9 +186,9 @@ export default function App() {
                             {item.summary}
                           </p>
                           <div className="flex items-center justify-end">
-                            <a 
-                              href={item.url} 
-                              target="_blank" 
+                            <a
+                              href={item.url}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-xs font-bold text-slate-400 flex items-center gap-1 hover:text-emerald-600 transition-colors"
                             >
@@ -265,7 +218,7 @@ export default function App() {
             본 시스템은 식품의약품안전처의 공개 자료를 기반으로 하며, 실시간 검색 기술을 활용합니다.
           </p>
           <p className="text-[10px] text-slate-300 mt-2">
-            © 2024 Food Safety Monitoring System for Quality Researchers
+            © 2025 Food Safety Monitoring System for Quality Researchers
           </p>
         </div>
       </footer>
