@@ -86,22 +86,23 @@ async function startServer() {
 
   app.get("/api/debug", async (req, res) => {
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const models: string[] = [];
-      for await (const m of ai.models.list()) {
-        models.push(m.name ?? "");
-      }
+      const key = process.env.GEMINI_API_KEY;
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=100`
+      );
+      const data = await r.json() as { models?: Array<{ name: string; supportedGenerationMethods?: string[] }> };
+      const models = (data.models ?? [])
+        .filter(m => m.name.includes("gemini") && m.supportedGenerationMethods?.includes("generateContent"))
+        .map(m => m.name);
       res.json({
-        hasApiKey: !!process.env.GEMINI_API_KEY,
+        hasApiKey: !!key,
         nodeEnv: process.env.NODE_ENV,
         nodeVersion: process.version,
-        availableModels: models.filter(m => m.includes("gemini")),
+        availableModels: models,
       });
     } catch (e) {
       res.json({
         hasApiKey: !!process.env.GEMINI_API_KEY,
-        nodeEnv: process.env.NODE_ENV,
-        nodeVersion: process.version,
         modelsError: e instanceof Error ? e.message : String(e),
       });
     }
